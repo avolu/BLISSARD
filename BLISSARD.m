@@ -2,13 +2,15 @@ function [ X_c, ADD] = BLISSARD( X, AC, param, flags )
 % BLISSA²RD written by Alexander von Lühmann, PhD, 2018
 % avonluh@gmail.com
 %
-% Method based is based on the framework described in 
+% Method is based on the framework described in 
 % von Lühmann, A., Boukouvalas, Z., Müller, K.-R., and Adali, T. “A new blind source separation
-% framework for signal analysis and artifact rejection in functional Near-Infrared Spectroscopy”. 
-% In: NeuroImage (2019). (in revision)
+% framework for signal analysis and artifact rejection in functional
+% Near-Infrared Spectroscopy”, 2019, p72-88, NeuroImage
+% https://doi.org/10.1016/j.neuroimage.2019.06.021
+
 %
 % BLISSARD uses multimodal data, here fNIRS and acceleration signals, to
-% minimize impacts/artifacts due to one of the modalities (here movement).
+% minimize components(artifacts) that coßdepend on one of the modalities, e.g., movement.
 % It performs ERBM ICA on raw fNIRS intensity signals to find independent sources.
 % It then performs CCA on these sources and and synchronously acquired
 % acceleration signals to find projections for each modality that have
@@ -16,7 +18,7 @@ function [ X_c, ADD] = BLISSARD( X, AC, param, flags )
 % on fNIRS signals are then backprojected and used to clean the fNIRS
 % sources.
 %
-% Method is dependend on ERBM ICA [Li and Adali], which can be found here:
+% Method dependends on ERBM ICA [Li and Adali], which can be found here:
 % http://mlsp.umbc.edu/codes/ERBM.zip
 % [Li and Adali]: X.-L. Li, and T. Adali, 
 % "Blind spatiotemporal separation of second and/or higher-order correlated 
@@ -28,7 +30,7 @@ function [ X_c, ADD] = BLISSARD( X, AC, param, flags )
 % AC:   input accel data with dimensions |time x channels|
 %                    feeding in orthogonalized (PCA) data is advised.
 % param.p:    ERBM filter order, use 15 per default
-% param.tau:  temporal embedding parameter (lag in samples)
+% param.tshift:  temporal embedding parameter (lag in samples)
 % param.NumOfEmb: Number of temporally embedded copies
 % param.nc:   number of constraints to be used. 3 (accel axes) by default
 % param.ct:   correlation threshold. removes constrained sources before
@@ -86,11 +88,11 @@ ADD.S=S;
 
 %% Use CCA with sources and Accelerometer data
 % and all fnirs data. result -> vector U
-% create temporally embedded acceleration signal (tau=2 samples, max 1s)
+% create temporally embedded acceleration signal (tshift=2 samples, max 1s)
 % BEWARE: Circular shifting is not optimal, use 
 acc_emb=accel_pca(:,1:param.nc);
 for i=1:param.NumOfEmb
-    acc=circshift( accel_pca(:,1:param.nc), i*param.tau, 1);
+    acc=circshift( accel_pca(:,1:param.nc), i*param.tshift, 1);
     acc(1:2*i,:)=repmat(acc(2*i+1,1:param.nc),2*i,1);
     acc_emb=[acc_emb acc];
     ADD.acc_emb=acc_emb;
